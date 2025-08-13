@@ -2,21 +2,13 @@
 ## Description: EDA on MBB File & Donor likelihood modeling using Random Forest
 
 install.packages("dplyr")
-installed.packages("janitor")
-install.packages("readr")
 install.packages("lubridate")
 install.packages("ggplot2")
-install.packages("skimr")
 install.packages("readxl")
-install.packages("tidyr")
 library(dplyr)
-library(janitor)
-library(readr)
 library(lubridate)
 library(ggplot2)
-library(skimr)
 library(readxl)
-library(tidyr)
 
 appends <- read_xlsx("Providence Appends 2024 - Class.xlsx")
 seat_manifest_MBS <- read.csv("2024-25 Seat Manifest - MBS.csv")
@@ -501,4 +493,5 @@ comparison_median_table <- bind_rows(donor_median, nondonor_median, high_potenti
 
 ## Author: Anna Kalooski
 ## Description: EDA on MBB File & Donor likelihood modeling using Random Forest
+
 
