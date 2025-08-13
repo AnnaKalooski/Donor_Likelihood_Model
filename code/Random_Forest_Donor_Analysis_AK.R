@@ -34,7 +34,6 @@ scans_clean <- scan_logs |>
   filter(!is.na(`Account.ID`), !is.na(`Event.Code`))
 
 ## Join MBB seat manifest and scan logs on Account.ID 
-# This data set ended up being huge because it was a many-to-many join
 combined_data <- left_join(
   MBSmanifest_clean,
   scans_clean,
@@ -119,7 +118,7 @@ appends_MBS <- appends_MBS |>
     pc_donor = ifelse(is.na(pc_donor), FALSE, pc_donor)
   )
 
-## Avg arrival time donor and no donor
+## Avg arrival time donor and non donor
 appends_MBS |>
   filter(scanned == TRUE) |>
   group_by(pc_donor) |>
@@ -138,7 +137,7 @@ appends_MBS |>
     donor_rate = round(donor_count / count * 100, 1)
   ) |>
   arrange(desc(donor_rate))
-## Invested professionals has the most donors at 11031. Suburban blue collar
+## Invested professionals group has the most donors at 11031. Suburban blue collar
 ## in second with 9049 and Empty nesters in third with 7611
 
 # donor rates by wealth
@@ -234,7 +233,6 @@ scorable_data <- appends_MBS |>
 # Predict donor probabilities using the random forest model
 scorable_data$donor_score_rf <- predict(rf_model, newdata = scorable_data, type = "prob")[, 2]
 
-
 # Mean donor score for actual donors
 mean_donor_score <- mean(scorable_data$donor_score_rf[scorable_data$pc_donor == TRUE], na.rm = TRUE)
 
@@ -317,6 +315,8 @@ scorable_data_unique <- scorable_data |>
   ) |>
   distinct(GRMID, .keep_all = TRUE)
 
+# variable importance plot 
+varImpPlot(rf_model, main = "Variable Importance – Donor Likelihood Model")
 
 # histogram for donor score distribution
 
@@ -361,9 +361,6 @@ ggplot(filter(scorable_data_unique, pc_donor == FALSE), aes(x = donor_score_rf))
   xlim(0, 0.9) +
   theme_minimal()
 
-
-
-
 # Plot ROC curve
 # Create ROC curve object
 roc_obj <- roc(scorable_data$pc_donor, scorable_data$donor_score_rf)
@@ -395,7 +392,6 @@ ggplot(fanbase_summary, aes(x = reorder(Fanbase.Profile, n), y = n)) +
   theme_minimal()
 
 ## Comparison btwn donors, non-donors, and high potential non donors
-## FIRST TRYING MEAN
 # Donor summary
 donor_summary <- scorable_data_unique |>
   filter(pc_donor == TRUE) |>
@@ -444,54 +440,8 @@ comparison_table <- bind_rows(donor_summary, non_donor_summary, high_potential_s
 
 print(comparison_table)
 
-## NOW TRYING MEDIAN
-# Donor group
-donor_median <- scorable_data_unique |>
-  filter(pc_donor == TRUE) |>
-  summarise(
-    Median_Income = median(WEALTH_HOUSEHOLD_INCOME_SINGLE_NUM, na.rm = TRUE),
-    Median_Net_Worth = median(WEALTH_NET_WORTH_SINGLE_NUM, na.rm = TRUE),
-    Median_Capacity = median(ESTIMATED_CAPACITY, na.rm = TRUE),
-    Median_RFM = median(RFM.Score, na.rm = TRUE),
-    Median_Priority_Points = median(replace_na(Priority.Points, 0), na.rm = TRUE),
-    Median_Fanatics_Value = median(Fanatics.Lifetime.Value, na.rm = TRUE),
-    Median_Arrival_Before_Tipoff = median(minutes_before_tipoff, na.rm = TRUE),
-    Count = n(),
-    Group = "Donor"
-  )
-
-# Non-Donor group
-nondonor_median <- scorable_data_unique |>
-  filter(pc_donor == FALSE) |>
-  summarise(
-    Median_Income = median(WEALTH_HOUSEHOLD_INCOME_SINGLE_NUM, na.rm = TRUE),
-    Median_Net_Worth = median(WEALTH_NET_WORTH_SINGLE_NUM, na.rm = TRUE),
-    Median_Capacity = median(ESTIMATED_CAPACITY, na.rm = TRUE),
-    Median_RFM = median(RFM.Score, na.rm = TRUE),
-    Median_Priority_Points = median(replace_na(Priority.Points, 0), na.rm = TRUE),
-    Median_Fanatics_Value = median(Fanatics.Lifetime.Value, na.rm = TRUE),
-    Median_Arrival_Before_Tipoff = median(minutes_before_tipoff, na.rm = TRUE),
-    Count = n(),
-    Group = "Non-Donor"
-  )
-
-# High-Potential Non-Donor group
-high_potential_median <- high_potential |>
-  summarise(
-    Median_Income = median(WEALTH_HOUSEHOLD_INCOME_SINGLE_NUM, na.rm = TRUE),
-    Median_Net_Worth = median(WEALTH_NET_WORTH_SINGLE_NUM, na.rm = TRUE),
-    Median_Capacity = median(ESTIMATED_CAPACITY, na.rm = TRUE),
-    Median_RFM = median(RFM.Score, na.rm = TRUE),
-    Median_Priority_Points = median(replace_na(Priority.Points, 0), na.rm = TRUE),
-    Median_Fanatics_Value = median(Fanatics.Lifetime.Value, na.rm = TRUE),
-    Median_Arrival_Before_Tipoff = median(minutes_before_tipoff, na.rm = TRUE),
-    Count = n(),
-    Group = "High-Potential Non-Donor"
-  )
-comparison_median_table <- bind_rows(donor_median, nondonor_median, high_potential_median) |>
-  select(Group, everything()) 
-
 ## Author: Anna Kalooski
 ## Description: EDA on MBB File & Donor likelihood modeling using Random Forest
+
 
 
